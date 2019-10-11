@@ -20,6 +20,28 @@ class APIMap(object):
         # We dont need a diferent route to specify thr format so we remove them and unify them
         return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
     
+    def getName(self, path):
+        if getattr(path, 'namespace'):
+            return path.namespace
+        return path.pattern._regex.strip('/')
+
+    
+    def processSubRoutes(self, sub_route):
+        end_points=[]
+        actions={}
+        for (ind, pattern) in enumerate(sub_route):
+            if pattern.callback is not None:
+                # print('\t'+pattern.name)
+                endpoint= self.processCallback(pattern) if pattern.name is not None else None
+                if endpoint is not None:
+                    actions[endpoint['name']]={
+                        'route':endpoint['endpoint'],
+                        'methods':endpoint['methods'],
+                        'fields':endpoint['fields']
+                    }
+        # import pdb; pdb.set_trace()
+        return actions
+    
 
     def processAPIPaths(self, api):
         '''  Genetates a map of paths and actions that can be taken every case '''
