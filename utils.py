@@ -22,7 +22,8 @@ class APIMap(object):
         # proaccess='api.urlpatterns'
         modules={}
         for idx, path in [(i,p) for (i, p) in enumerate(self.api.urlpatterns) if p.callback is None]:
-7
+            modules[self.getName(path)] = self.processRoutes(path)
+        # print(json.dumps(modules, indent=2))
         return modules
 
 
