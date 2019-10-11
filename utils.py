@@ -33,6 +33,31 @@ class APIMap(object):
         return modules
 
 
+    def processRoutes(self, path):
+        # print(idx)
+        # print(path.pattern._regex)
+        sub_route=path.urlconf_name.urlpatterns
+        actions=self.processSubRoutes(sub_route)
+
+        module={}
+        module['module_path'] = path.pattern._regex
+        module['actions'] = actions
+        # import json
+        # print(json.dumps(module, indent=2))
+        # access=proaccess+f'[{idx}]'+'.urlconf_name.urlpatterns'
+        return module
+
+    def processAPIPaths(self, api):
+        '''  Genetates a map of paths and actions that can be taken every case '''
+
+        # Iterates over each route as a Model it does note take into acounts un routed paths
+        # proaccess='api.urlpatterns'
+        modules={}
+        for idx, path in [(i,p) for (i, p) in enumerate(self.api.urlpatterns) if p.callback is None]:
+            modules[self.getName(path)] = self.processRoutes(path)
+        # print(json.dumps(modules, indent=2))
+        return modules
+
     def generateActionList(self):
 
         actions=[]
