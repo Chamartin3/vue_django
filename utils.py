@@ -10,7 +10,9 @@ def get_context_object(request):
         'username':request.user.username,
         'first_name':request.user.first_name,
         'last_name':request.user.last_name,
-        'email':request.user.email
+        'email':request.user.email,
+        'permissions':request.user.user_permissions.all(),
+        'groups':request.user.groups.all(),
         }
     else
         user = request.user.is_authenticated
