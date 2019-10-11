@@ -1,7 +1,36 @@
 from django.conf import settings
+from importlib import import_module
+
 
 from django.middleware.csrf import get_token
 
+api= import_module(getattr(settings, "DJV_API_URLS", None ))
+
+
+def get_routes(api):
+    ''' gets all the paths that interacts with the aplication '''
+
+    # Paths that have an asociated route (this are also the paths where a aplication is redirectes if the vue routed does not match a page )
+    # TODO: filter these by autehcticationm
+    navigation_paths= getattr(settings, "DJV_NAVIGATION", [''])
+
+    # Paths that are excluded from the api
+    excluded_routes= getattr(settings, "DJV_EXCLUDED_ROUTES", [''])
+
+    # base route API (is the url where the api es located)I
+    api_baseroute= getattr(settings, "DJV_API_ROUTE", 'api/')
+
+    redir_paths=[{ 'redirect':f'/{p}', 'path': f'/{p}*'} for p in navigation_paths]
+
+    # model routes is where the complete models are locatedb (Model Viewset)
+    # TODO: Read also the routes from none Viewset routes
+    model_routes = [url.pattern._regex for url in api.urlpatterns if url.pattern._regex not in excluded_routes],
+
+    return {
+    'api_route':api_baseroute,
+    'model_routes':model_routes[0],
+    'navigation_paths':redir_paths,
+    }
 
 def get_authentication():
     on_login= getattr(settings, "LOGIN_URL", None )
@@ -14,6 +43,7 @@ def get_authentication():
         'on_login':redir,
         'auth_path':auth_path
     }
+
 
 
 def get_context_object(request):
@@ -35,6 +65,8 @@ def get_context_object(request):
     context =  {
         'auth':get_authentication,
         'user':user, 
-        'token':get_token(request) }
+        'token':get_token(request),
+        **get_routes(api)
+        }
 
     return {'vue_django_vars':mark_safe(json.dumps(context))}
