@@ -1,10 +1,31 @@
 from django.conf import settings
 from importlib import import_module
-
-
+import json
 from django.middleware.csrf import get_token
+from django.utils.html import mark_safe
 
 api= import_module(getattr(settings, "DJV_API_URLS", None ))
+
+
+class APIMap(object):
+    """docstring for APIMap."""
+
+    def __init__(self, api):
+        self.api = api
+        self.modules = self.processAPIPaths(api)
+    
+
+    def processAPIPaths(self, api):
+        '''  Genetates a map of paths and actions that can be taken every case '''
+
+        # Iterates over each route as a Model it does note take into acounts un routed paths
+        # proaccess='api.urlpatterns'
+        modules={}
+        for idx, path in [(i,p) for (i, p) in enumerate(self.api.urlpatterns) if p.callback is None]:
+7
+        return modules
+
+
 
 
 def get_routes(api):
