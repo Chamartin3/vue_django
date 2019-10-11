@@ -1,6 +1,6 @@
 from django.conf import settings
 
-
+from django.middleware.csrf import get_token
 
 def get_context_object(request):
     
@@ -9,4 +9,5 @@ def get_context_object(request):
     else
         user = request.user.is_authenticated
 
-    return user
+    return {
+        'user':user, 'token':get_token(request)
