@@ -13,6 +13,12 @@ class APIMap(object):
     def __init__(self, api):
         self.api = api
         self.modules = self.processAPIPaths(api)
+        self.modelMap = self.generateModels()
+
+    
+    def simplifiedEndpoint(self, pattern):
+        # We dont need a diferent route to specify thr format so we remove them and unify them
+        return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
     
 
     def processAPIPaths(self, api):
@@ -25,6 +31,93 @@ class APIMap(object):
             modules[self.getName(path)] = self.processRoutes(path)
         # print(json.dumps(modules, indent=2))
         return modules
+
+
+    def generateActionList(self):
+
+        actions=[]
+        for m_name, module in self.modules.items():
+            for a_name, action in module['actions'].items():
+                methods_per_action=len(action['methods'])
+                for m in action['methods']:
+                    act={}
+                    act['unique'] = methods_per_action < 2
+                    act['type'] = m
+                    act['basepath'] = module['module_path']
+                    act['route'] = self.processFullpath(module['module_path']+action['route'])
+                    act['fields'] = action['fields']
+                    act['endpoint_name'] = a_name
+                    act['module_name'] = m_name
+                    actions.append(act)
+        return actions
+
+
+
+    def processFullpath(self, fullpath):
+        pathsWRegex= re.sub(r'[^a-zA-Z/<>:]', '', fullpath.replace('P<','<')).replace('//','/')
+        params=re.findall(r'<(.*?)>',pathsWRegex)
+
+        descParams=[]
+        for param in params:
+            descParam={}
+            paramArray=param.split(':')
+            if len(paramArray)>1:
+                descParam['name']=paramArray[1]
+                descParam['type']=paramArray[0]
+            else:
+                descParam['name']=paramArray[0]
+                descParam['type']='any'
+            descParams.append(descParam)
+
+        pieces=re.split('<|>',pathsWRegex)
+        res={
+            'path':pathsWRegex,
+            'params':descParams,
+            'pieces':pieces
+        }
+
+        return res
+
+    def generateActionList(self):
+
+        actions=[]
+        for m_name, module in self.modules.items():
+            for a_name, action in module['actions'].items():
+                methods_per_action=len(action['methods'])
+                for m in action['methods']:
+                    act={}
+                    act['unique'] = methods_per_action < 2
+                    act['type'] = m
+                    act['basepath'] = module['module_path']
+                    act['route'] = self.processFullpath(module['module_path']+action['route'])
+                    act['fields'] = action['fields']
+                    act['endpoint_name'] = a_name
+                    act['module_name'] = m_name
+                    actions.append(act)
+        return actions
+
+    def getNamespace(self, a):
+        ep=a['endpoint_name'].split('-')
+        if len(ep)>1:
+            return True, ep[0]
+        return  False ,a['module_name']
+
+    def generateModels(self):
+        actions=self.generateActionList()
+        models={}
+        for a in actions:
+            is_namespace, model_name=self.getNamespace(a)
+            if is_namespace:
+                a['name']=a['endpoint_name'].replace(f'{model_name}-','')
+            else:
+                a['name']=a['endpoint_name']
+
+            model_in_list=models.get(model_name,None)
+            if model_in_list is None:
+                models[model_name]=[]
+
+            models[model_name].append(a)
+        return models
 
 
 
