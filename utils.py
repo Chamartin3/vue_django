@@ -1,13 +1,18 @@
 from django.conf import settings
-from importlib import import_module
-import json
-from django.middleware.csrf import get_token
-from django.utils.html import mark_safe
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.views import APIView
+from rest_framework.serializers import ModelSerializer
+
+from .serializers import GroupsSerializer, PermissionSerializer
 from rest_framework.relations import ( RelatedField,
     HyperlinkedIdentityField, HyperlinkedRelatedField, ManyRelatedField,
     PrimaryKeyRelatedField, RelatedField, SlugRelatedField, StringRelatedField,
 )
 
+
+import json
+import re
+from django.utils.encoding import smart_str
 
 api= import_module(getattr(settings, "DJV_API_URLS", None ))
 
