@@ -15,6 +15,14 @@ class APIMap(object):
         self.modules = self.processAPIPaths(api)
         self.modelMap = self.generateModels()
 
+
+    def get_model_fields(self, serializer_class):
+        '''
+        Reasd the fields of a model
+        '''
+        instance =serializer_class()
+        return instance._writable_fields
+
     
     def processCallback(self, path):
 
