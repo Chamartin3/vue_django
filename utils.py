@@ -16,6 +16,42 @@ class APIMap(object):
         self.modelMap = self.generateModels()
 
     
+    def processCallback(self, path):
+
+        if path.name == 'api-root':
+            return None
+        endpoint={}
+        endpoint['name']=path.name
+
+        if issubclass(path.callback.cls, ModelViewSet):
+            view = path.callback.cls
+            # print('\t \t  Is Model Viewset')
+            # print('\t \t '+path.pattern._regex)
+
+            endpoint['endpoint'] = self.simplifiedEndpoint(path.pattern._regex)
+            methods = [k.upper() for k in path.callback.actions.keys()]
+            endpoint['methods'] = methods
+            endpoint['fields'] = self.get_model_fields(view.serializer_class)
+            # metodos_permitidos=[m.upper() for m in view.http_method_names if hasattr(view, m)]
+            # print('\t  \t'+str(metodos_permitidos))
+            # print(access+'.callback.cls')
+
+        elif issubclass(path.callback.cls, APIView):
+            # print('\t  \t  Is APIView')
+            # print('\t  \t'+path.pattern._route)
+            endpoint['endpoint'] = path.pattern._route
+            view=path.callback.cls
+            methods=[m.upper() for m in view.http_method_names if hasattr(view, m) and m.upper() != 'OPTIONS']
+            endpoint['methods'] = methods
+            if hasattr(view, 'serializer_class'):
+                endpoint['fields'] = self.get_model_fields(view.serializer_class)
+            else:
+                endpoint['fields'] = None
+            # print('\t  \t'+str(metodos_permitidos))
+            # print(access+'.callback.cls')
+        return endpoint
+
+    
     def simplifiedEndpoint(self, pattern):
         # We dont need a diferent route to specify thr format so we remove them and unify them
         return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
