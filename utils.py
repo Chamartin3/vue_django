@@ -3,6 +3,11 @@ from importlib import import_module
 import json
 from django.middleware.csrf import get_token
 from django.utils.html import mark_safe
+from rest_framework.relations import ( RelatedField,
+    HyperlinkedIdentityField, HyperlinkedRelatedField, ManyRelatedField,
+    PrimaryKeyRelatedField, RelatedField, SlugRelatedField, StringRelatedField,
+)
+
 
 api= import_module(getattr(settings, "DJV_API_URLS", None ))
 
@@ -21,6 +26,15 @@ class APIMap(object):
         Reasd the fields of a model
         '''
         instance =serializer_class()
+               relation_classes= [
+            HyperlinkedIdentityField,
+            HyperlinkedRelatedField,
+            ManyRelatedField,
+            PrimaryKeyRelatedField,
+            RelatedField,
+            SlugRelatedField,
+            StringRelatedField,
+        ]
         return instance._writable_fields
 
     
