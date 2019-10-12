@@ -21,6 +21,11 @@ class APIMap(object):
         self.modelMap = self.generateModels()
 
 
+    def simplifiedEndpoint(self, pattern):
+        # We dont need a diferent route to specify thr format so we remove them and unify them
+        return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
+
+
     def get_model_fields(self, serializer_class):
         instance =serializer_class()
         fields={}
@@ -72,8 +77,6 @@ class APIMap(object):
                     field['_validators']=validators
                     fields[rf.field_name]=field
 
-                    
-
                 elif issubclass(rf.__class__, ModelSerializer):
                     field['related']=True
                     field['related_model']=rf.Meta.model.__name__
@@ -97,7 +100,7 @@ class APIMap(object):
             # print(serializer_class)
             pass
         return fields
-    
+
     def processCallback(self, path):
 
         if path.name == 'api-root':
@@ -133,17 +136,11 @@ class APIMap(object):
             # print(access+'.callback.cls')
         return endpoint
 
-    
-    def simplifiedEndpoint(self, pattern):
-        # We dont need a diferent route to specify thr format so we remove them and unify them
-        return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
-    
     def getName(self, path):
         if getattr(path, 'namespace'):
             return path.namespace
         return path.pattern._regex.strip('/')
 
-    
     def processSubRoutes(self, sub_route):
         end_points=[]
         actions={}
@@ -159,19 +156,6 @@ class APIMap(object):
                     }
         # import pdb; pdb.set_trace()
         return actions
-    
-
-    def processAPIPaths(self, api):
-        '''  Genetates a map of paths and actions that can be taken every case '''
-
-        # Iterates over each route as a Model it does note take into acounts un routed paths
-        # proaccess='api.urlpatterns'
-        modules={}
-        for idx, path in [(i,p) for (i, p) in enumerate(self.api.urlpatterns) if p.callback is None]:
-            modules[self.getName(path)] = self.processRoutes(path)
-        # print(json.dumps(modules, indent=2))
-        return modules
-
 
     def processRoutes(self, path):
         # print(idx)
@@ -197,25 +181,6 @@ class APIMap(object):
             modules[self.getName(path)] = self.processRoutes(path)
         # print(json.dumps(modules, indent=2))
         return modules
-
-    def generateActionList(self):
-
-        actions=[]
-        for m_name, module in self.modules.items():
-            for a_name, action in module['actions'].items():
-                methods_per_action=len(action['methods'])
-                for m in action['methods']:
-                    act={}
-                    act['unique'] = methods_per_action < 2
-                    act['type'] = m
-                    act['basepath'] = module['module_path']
-                    act['route'] = self.processFullpath(module['module_path']+action['route'])
-                    act['fields'] = action['fields']
-                    act['endpoint_name'] = a_name
-                    act['module_name'] = m_name
-                    actions.append(act)
-        return actions
-
 
 
     def processFullpath(self, fullpath):
@@ -283,47 +248,6 @@ class APIMap(object):
 
             models[model_name].append(a)
         return models
-
-
-
-
-def get_routes(api):
-    ''' gets all the paths that interacts with the aplication '''
-
-    # Paths that have an asociated route (this are also the paths where a aplication is redirectes if the vue routed does not match a page )
-    # TODO: filter these by autehcticationm
-    navigation_paths= getattr(settings, "DJV_NAVIGATION", [''])
-
-    # Paths that are excluded from the api
-    excluded_routes= getattr(settings, "DJV_EXCLUDED_ROUTES", [''])
-
-    # base route API (is the url where the api es located)I
-    api_baseroute= getattr(settings, "DJV_API_ROUTE", 'api/')
-
-    redir_paths=[{ 'redirect':f'/{p}', 'path': f'/{p}*'} for p in navigation_paths]
-
-    # model routes is where the complete models are locatedb (Model Viewset)
-    # TODO: Read also the routes from none Viewset routes
-    model_routes = [url.pattern._regex for url in api.urlpatterns if url.pattern._regex not in excluded_routes],
-
-    return {
-    'api_route':api_baseroute,
-    'model_routes':model_routes[0],
-    'navigation_paths':redir_paths,
-    }
-
-def get_authentication():
-    on_login= getattr(settings, "LOGIN_URL", None )
-    on_logout= getattr(settings, "LOGOUT_REDIRECT_URL", None )
-    redir= getattr(settings, "LOGIN_REDIRECT_URL", None)
-    auth_path= getattr(settings, "DLV_AUTH_PATH", None)
-    #
-    return {
-        'on_logout':on_logout,
-        'on_login':redir,
-        'auth_path':auth_path
-    }
-
 
 
 def get_context_object(request):
