@@ -14,8 +14,61 @@ import json
 import re
 from django.utils.encoding import smart_str
 
-api= import_module(getattr(settings, "DJV_API_URLS", None ))
+def get_authentication():
+    on_login= getattr(settings, "LOGIN_URL", None )
+    on_logout= getattr(settings, "LOGOUT_REDIRECT_URL", None )
+    redir= getattr(settings, "LOGIN_REDIRECT_URL", None)
+    auth_path= getattr(settings, "DLV_AUTH_PATH", None)
+    #
+    return {
+        'on_logout':on_logout,
+        'on_login':redir,
+        'auth_path':auth_path
+    }
 
+def get_auth_user(request):
+    ''' returns all the Autentication information for the current user'''
+    if request.user.is_authenticated:
+        user= {
+        'id':request.user.pk,
+        'username':request.user.username,
+        'first_name':request.user.first_name,
+        'last_name':request.user.last_name,
+        'email':request.user.email,
+        'permissions':PermissionSerializer(request.user.user_permissions.all(), many=True).data,
+        'groups':GroupsSerializer(request.user.groups.all(), many=True).data,
+        # 'picture':request.user.profile.pic_url
+        }
+    else:
+        user=request.user.is_authenticated
+    # returns all the Autentication information
+    return user
+
+
+def get_routes(api):
+    ''' gets all the paths that interacts with the aplication '''
+
+    # Paths that have an asociated route (this are also the paths where a aplication is redirectes if the vue routed does not match a page )
+    # TODO: filter these by autehcticationm
+    navigation_paths= getattr(settings, "DJV_NAVIGATION", [''])
+
+    # Paths that are excluded from the api
+    excluded_routes= getattr(settings, "DJV_EXCLUDED_ROUTES", [''])
+
+    # base route API (is the url where the api es located)I
+    api_baseroute= getattr(settings, "DJV_API_ROUTE", 'api/')
+
+    redir_paths=[{ 'redirect':f'/{p}', 'path': f'/{p}*'} for p in navigation_paths]
+
+    # model routes is where the complete models are locatedb (Model Viewset)
+    # TODO: Read also the routes from none Viewset routes
+    model_routes = [url.pattern._regex for url in api.urlpatterns if url.pattern._regex not in excluded_routes],
+
+    return {
+    'api_route':api_baseroute,
+    'model_routes':model_routes[0],
+    'navigation_paths':redir_paths,
+    }
 
 class APIMap(object):
     """docstring for APIMap."""
@@ -253,76 +306,3 @@ class APIMap(object):
 
             models[model_name].append(a)
         return models
-
-
-def get_authentication():
-    on_login= getattr(settings, "LOGIN_URL", None )
-    on_logout= getattr(settings, "LOGOUT_REDIRECT_URL", None )
-    redir= getattr(settings, "LOGIN_REDIRECT_URL", None)
-    auth_path= getattr(settings, "DLV_AUTH_PATH", None)
-    #
-    return {
-        'on_logout':on_logout,
-        'on_login':redir,
-        'auth_path':auth_path
-    }
-
-def get_auth_user(request):
-    ''' returns all the Autentication information for the current user'''
-    if request.user.is_authenticated:
-        user= {
-        'id':request.user.pk,
-        'username':request.user.username,
-        'first_name':request.user.first_name,
-        'last_name':request.user.last_name,
-        'email':request.user.email,
-        'permissions':request.user.user_permissions.all(),
-        'groups':request.user.groups.all(),
-        # 'picture':request.user.profile.pic_url
-        }
-    else:
-        user=request.user.is_authenticated
-    # returns all the Autentication information
-    return user
-
-
-def get_routes(api):
-    ''' gets all the paths that interacts with the aplication '''
-
-    # Paths that have an asociated route (this are also the paths where a aplication is redirectes if the vue routed does not match a page )
-    # TODO: filter these by autehcticationm
-    navigation_paths= getattr(settings, "DJV_NAVIGATION", [''])
-
-    # Paths that are excluded from the api
-    excluded_routes= getattr(settings, "DJV_EXCLUDED_ROUTES", [''])
-
-    # base route API (is the url where the api es located)I
-    api_baseroute= getattr(settings, "DJV_API_ROUTE", 'api/')
-
-    redir_paths=[{ 'redirect':f'/{p}', 'path': f'/{p}*'} for p in navigation_paths]
-
-    # model routes is where the complete models are locatedb (Model Viewset)
-    # TODO: Read also the routes from none Viewset routes
-    model_routes = [url.pattern._regex for url in api.urlpatterns if url.pattern._regex not in excluded_routes],
-
-    return {
-    'api_route':api_baseroute,
-    'model_routes':model_routes[0],
-    'navigation_paths':redir_paths,
-    }
-
-def get_context_object(request):
-    
-
-        map = APIMap(api)
-
-        context = {
-            'user':get_auth_user(self.request),
-            'csrf_token': get_token(self.request),
-            'autentication':get_authentication(),
-            '_actions':map.modelMap,
-            **get_routes(api)
-            }
-
-        # con = mark_safe(json.dumps(context))
-        return {'vue_django_vars':mark_safe(json.dumps(context))}
