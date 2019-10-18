@@ -215,6 +215,7 @@ class APIMap(object):
         # import pdb; pdb.set_trace()
         return actions
 
+
     def processRoutes(self, path):
         # print(idx)
         # print(path.pattern._regex)
@@ -229,6 +230,7 @@ class APIMap(object):
         # access=proaccess+f'[{idx}]'+'.urlconf_name.urlpatterns'
         return module
 
+
     def processAPIPaths(self, api):
         '''  Genetates a map of paths and actions that can be taken every case '''
 
@@ -239,6 +241,7 @@ class APIMap(object):
             modules[self.getName(path)] = self.processRoutes(path)
         # print(json.dumps(modules, indent=2))
         return modules
+
 
 
     def processFullpath(self, fullpath):
@@ -284,11 +287,13 @@ class APIMap(object):
                     actions.append(act)
         return actions
 
+
     def getNamespace(self, a):
         ep=a['endpoint_name'].split('-')
         if len(ep)>1:
             return True, ep[0]
         return  False ,a['module_name']
+
 
     def generateModels(self):
         actions=self.generateActionList()
