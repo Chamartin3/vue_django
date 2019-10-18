@@ -5,7 +5,7 @@ from vue_django.utils import getContext
 register = Library()
 
 
-@register.tag('vue_django')
+@register.tag('django_context')
 def vue(parser, token):
 
     return getContext()
