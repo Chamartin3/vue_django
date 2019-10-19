@@ -171,8 +171,11 @@ class APIMap(object):
 
 
     def processFullpath(self, fullpath):
-        pathsWRegex= re.sub(r'[^a-zA-Z/<>:]', '', fullpath.replace('P<','<')).replace('//','/')
-        params=re.findall(r'<(.*?)>',pathsWRegex)
+        '''
+        Reads the  information inside a path and process it to fenerate a path dictionary 
+        '''
+        pathsWRegex = re.sub(r'[^a-zA-Z/<>:]', '', fullpath.replace('P<','<')).replace('//','/')
+        params = re.findall(r'<(.*?)>',pathsWRegex)
 
         descParams=[]
         for param in params:
@@ -196,6 +199,10 @@ class APIMap(object):
         return res
 
     def generateActionList(self):
+        '''
+        Generates a list of actions readng the HTML Endpoints in 
+        in the modules list
+        '''
 
         actions=[]
         for m_name, module in self.modules.items():
@@ -213,11 +220,16 @@ class APIMap(object):
                     actions.append(act)
         return actions
 
+
     def getNamespace(self, a):
+        '''
+        Gets the namespace used to define the endpoint name, from an enpoint dicctionary 
+        '''
         ep=a['endpoint_name'].split('-')
         if len(ep)>1:
             return True, ep[0]
         return  False ,a['module_name']
+
 
 
     def generateModels(self):

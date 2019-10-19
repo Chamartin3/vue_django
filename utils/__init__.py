@@ -9,6 +9,7 @@ from rest_framework.relations import ( RelatedField,
     PrimaryKeyRelatedField, RelatedField, SlugRelatedField, StringRelatedField,
 )
 
+from .api_map import ApiMap
 
 import json
 import re
