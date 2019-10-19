@@ -97,20 +97,13 @@ class APIMap(object):
 
         if issubclass(path.callback.cls, ModelViewSet):
             view = path.callback.cls
-            # print('\t \t  Is Model Viewset')
-            # print('\t \t '+path.pattern._regex)
-
             endpoint['endpoint'] = self.simplifiedEndpoint(path.pattern._regex)
             methods = [k.upper() for k in path.callback.actions.keys()]
             endpoint['methods'] = methods
             endpoint['fields'] = self.get_model_fields(view.serializer_class)
-            # metodos_permitidos=[m.upper() for m in view.http_method_names if hasattr(view, m)]
-            # print('\t  \t'+str(metodos_permitidos))
-            # print(access+'.callback.cls')
+
 
         elif issubclass(path.callback.cls, APIView):
-            # print('\t  \t  Is APIView')
-            # print('\t  \t'+path.pattern._route)
             endpoint['endpoint'] = path.pattern._route
             view=path.callback.cls
             methods=[m.upper() for m in view.http_method_names if hasattr(view, m) and m.upper() != 'OPTIONS']
@@ -119,21 +112,17 @@ class APIMap(object):
                 endpoint['fields'] = self.get_model_fields(view.serializer_class)
             else:
                 endpoint['fields'] = None
-            # print('\t  \t'+str(metodos_permitidos))
-            # print(access+'.callback.cls')
         return endpoint
 
-    def getName(self, path):
-        if getattr(path, 'namespace'):
-            return path.namespace
-        return path.pattern._regex.strip('/')
 
     def processSubRoutes(self, sub_route):
-        end_points=[]
-        actions={}
+        '''
+        Estructrurs each endpoint as a dicrionary reading the callback
+        '''
+        end_points= []
+        actions = {}
         for (ind, pattern) in enumerate(sub_route):
             if pattern.callback is not None:
-                # print('\t'+pattern.name)
                 endpoint= self.processCallback(pattern) if pattern.name is not None else None
                 if endpoint is not None:
                     actions[endpoint['name']]={
@@ -141,33 +130,43 @@ class APIMap(object):
                         'methods':endpoint['methods'],
                         'fields':endpoint['fields']
                     }
-        # import pdb; pdb.set_trace()
         return actions
 
     def processRoutes(self, path):
-        # print(idx)
-        # print(path.pattern._regex)
-        sub_route=path.urlconf_name.urlpatterns
-        actions=self.processSubRoutes(sub_route)
-
-        module={}
+        '''
+        Reads each path as a module
+        '''
+        sub_route = path.urlconf_name.urlpatterns
+        actions = self.processSubRoutes(sub_route)
+        module = {}
         module['module_path'] = path.pattern._regex
         module['actions'] = actions
-        # import json
-        # print(json.dumps(module, indent=2))
-        # access=proaccess+f'[{idx}]'+'.urlconf_name.urlpatterns'
         return module
 
-    def processAPIPaths(self, api):
-        '''  Genetates a map of paths and actions that can be taken every case '''
+    
+    def getName(self, path):
+        if getattr(path, 'namespace'):
+            return path.namespace
+        return path.pattern._regex.strip('/')
 
-        # Iterates over each route as a Model it does note take into acounts un routed paths
+    def processAPIPaths(self, api):
+        '''  Genetates a map of paths and actions that can be taken every case 
+        Iterates over each route as a Model it does note take into acounts un routed paths
+        '''
         # proaccess='api.urlpatterns'
         modules={}
-        for idx, path in [(i,p) for (i, p) in enumerate(self.api.urlpatterns) if p.callback is None]:
+        for idx, path in [ (i,p) for (i, p) in enumerate(self.api.urlpatterns) if p.callback is None ]:
             modules[self.getName(path)] = self.processRoutes(path)
         # print(json.dumps(modules, indent=2))
         return modules
+
+
+        # A partir de aqui tenemos la visualización de las rutas
+
+
+
+
+
 
 
     def processFullpath(self, fullpath):
@@ -177,7 +176,7 @@ class APIMap(object):
         pathsWRegex = re.sub(r'[^a-zA-Z/<>:]', '', fullpath.replace('P<','<')).replace('//','/')
         params = re.findall(r'<(.*?)>',pathsWRegex)
 
-        descParams=[]
+        descParams = []
         for param in params:
             descParam={}
             paramArray=param.split(':')
@@ -189,8 +188,8 @@ class APIMap(object):
                 descParam['type']='any'
             descParams.append(descParam)
 
-        pieces=re.split('<|>',pathsWRegex)
-        res={
+        pieces = re.split('<|>',pathsWRegex)
+        res = {
             'path':pathsWRegex,
             'params':descParams,
             'pieces':pieces
