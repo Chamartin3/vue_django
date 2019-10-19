@@ -1,5 +1,6 @@
 class APIMap(object):
-    """APIMap  utility class that process ana endpoint and returns a list with all the actions methods an lists contian each one """
+    """APIMap  utility class that process ana endpoint and 
+    returns a list with all the actions methods an lists contian each one """
 
     def __init__(self, api):
         self.api = api
@@ -8,7 +9,7 @@ class APIMap(object):
 
 
     def simplifiedEndpoint(self, pattern):
-        # We dont need a diferent route to specify the format so we remove them and unify them
+        # We dont need a diferent route to specify thr format so we remove them and unify them
         return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
 
 
@@ -143,7 +144,6 @@ class APIMap(object):
         # import pdb; pdb.set_trace()
         return actions
 
-
     def processRoutes(self, path):
         # print(idx)
         # print(path.pattern._regex)
@@ -158,7 +158,6 @@ class APIMap(object):
         # access=proaccess+f'[{idx}]'+'.urlconf_name.urlpatterns'
         return module
 
-
     def processAPIPaths(self, api):
         '''  Genetates a map of paths and actions that can be taken every case '''
 
@@ -169,7 +168,6 @@ class APIMap(object):
             modules[self.getName(path)] = self.processRoutes(path)
         # print(json.dumps(modules, indent=2))
         return modules
-
 
 
     def processFullpath(self, fullpath):
@@ -215,7 +213,6 @@ class APIMap(object):
                     actions.append(act)
         return actions
 
-
     def getNamespace(self, a):
         ep=a['endpoint_name'].split('-')
         if len(ep)>1:
@@ -224,11 +221,13 @@ class APIMap(object):
 
 
     def generateModels(self):
-        ''' Genetares the final iteration of the models'''
-        actions=self.generateActionList()
-        models={}
+        ''' Generates the final iteration of the models
+            from the action list 
+        '''
+        actions = self.generateActionList()
+        models = {}
         for a in actions:
-            is_namespace, model_name=self.getNamespace(a)
+            is_namespace, model_name = self.getNamespace(a)
             if is_namespace:
                 a['name']=a['endpoint_name'].replace(f'{model_name}-','')
             else:
