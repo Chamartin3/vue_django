@@ -8,15 +8,15 @@ class APIMap(object):
         self.modelMap = self.generateModels()
 
 
-    def simplifiedEndpoint(self, pattern):
-        # We dont need a diferent route to specify thr format so we remove them and unify them
-        return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
-
 
     def get_model_fields(self, serializer_class):
-        instance =serializer_class()
-        fields={}
-        relation_classes= [
+        '''
+        TODO: read the fields and generate a list of validators that can be replicated 
+        in the vue aplication
+        '''
+        instance = serializer_class()
+        fields = {}
+        relation_classes = [
             HyperlinkedIdentityField,
             HyperlinkedRelatedField,
             ManyRelatedField,
@@ -29,16 +29,16 @@ class APIMap(object):
         try:
             for f in instance._writable_fields:
                 field={}
-                field['related']=False
-                field['_kwargs']=[str(x) for x in getattr(f, '_kwargs', [])]
-                field['label']=str(getattr(f, 'label', None))
-                field['help_text']=str(getattr(f, 'help_text', None))
-                field['allow_null']=getattr(f, 'allow_null', False)
-                field['allow_blank']=getattr(f, 'allow_blank', False)
-                field['read_only']=getattr(f, 'read_only', False)
+                field['related'] = False
+                field['_kwargs'] = [ str(x) for x in getattr( f, '_kwargs', []) ]
+                field['label'] = str(getattr( f, 'label', None))
+                field['help_text'] = str(getattr( f, 'help_text', None))
+                field['allow_null']= getattr( f, 'allow_null', False)
+                field['allow_blank']= getattr( f, 'allow_blank', False)
+                field['read_only']= getattr( f, 'read_only', False)
                 validators=[v.__class__.__name__ for v in getattr(f, '_validators', [])]
-                field['_validators']=validators
-                fields[f.field_name]=field
+                field['_validators'] = validators
+                fields[f.field_name] = field
 
             for rf in instance._readable_fields:
                 if rf.__class__ in relation_classes:
@@ -88,7 +88,22 @@ class APIMap(object):
             pass
         return fields
 
+
+    # -----------------------------------------------------------
+    #   
+    # -----------------------------------------------------------
+
+    def simplifiedEndpoint(self, pattern):
+        '''
+        removes the rgeex from the enpoint
+        '''
+        # We dont need a diferent route to specify thr format so we remove them and unify them
+        return pattern.replace('\.(?P<format>[a-z0-9]+)/?$','/$')
+  
     def processCallback(self, path):
+        '''
+        Reads the callback of the path and returns a action and the fields
+        '''
 
         if path.name == 'api-root':
             return None
@@ -98,7 +113,7 @@ class APIMap(object):
         if issubclass(path.callback.cls, ModelViewSet):
             view = path.callback.cls
             endpoint['endpoint'] = self.simplifiedEndpoint(path.pattern._regex)
-            methods = [k.upper() for k in path.callback.actions.keys()]
+            methods = [ k.upper() for k in path.callback.actions.keys() ]
             endpoint['methods'] = methods
             endpoint['fields'] = self.get_model_fields(view.serializer_class)
 
@@ -117,7 +132,7 @@ class APIMap(object):
 
     def processSubRoutes(self, sub_route):
         '''
-        Estructrurs each endpoint as a dicrionary reading the callback
+        Estructrure each endpoint as a dicrionary reading the callback
         '''
         end_points= []
         actions = {}
@@ -126,9 +141,9 @@ class APIMap(object):
                 endpoint= self.processCallback(pattern) if pattern.name is not None else None
                 if endpoint is not None:
                     actions[endpoint['name']]={
-                        'route':endpoint['endpoint'],
-                        'methods':endpoint['methods'],
-                        'fields':endpoint['fields']
+                        'route': endpoint['endpoint'],
+                        'methods': endpoint['methods'],
+                        'fields': endpoint['fields']
                     }
         return actions
 
@@ -145,6 +160,9 @@ class APIMap(object):
 
     
     def getName(self, path):
+        '''
+            Gets the endpoint name
+        '''
         if getattr(path, 'namespace'):
             return path.namespace
         return path.pattern._regex.strip('/')
@@ -161,12 +179,7 @@ class APIMap(object):
         return modules
 
 
-        # A partir de aqui tenemos la visualización de las rutas
-
-
-
-
-
+        # Route Reader
 
 
     def processFullpath(self, fullpath):
