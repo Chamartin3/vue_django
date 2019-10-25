@@ -1,18 +1,9 @@
 from django.conf import settings
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.views import APIView
-from rest_framework.serializers import ModelSerializer
 
 from .serializers import GroupsSerializer, PermissionSerializer
-from rest_framework.relations import ( RelatedField,
-    HyperlinkedIdentityField, HyperlinkedRelatedField, ManyRelatedField,
-    PrimaryKeyRelatedField, RelatedField, SlugRelatedField, StringRelatedField,
-)
 
 from .api_map import ApiMap
 
-import json
-import re
 from django.utils.encoding import smart_str
 
 def get_authentication():
@@ -66,7 +57,7 @@ def get_routes(api):
     model_routes = [url.pattern._regex for url in api.urlpatterns if url.pattern._regex not in excluded_routes],
 
     return {
-    'api_route':api_baseroute,
-    'model_routes':model_routes[0],
-    'navigation_paths':redir_paths,
+        'api_route':api_baseroute,
+        'model_routes':model_routes[0],
+        'navigation_paths':redir_paths,
     }

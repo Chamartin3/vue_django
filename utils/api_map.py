@@ -1,78 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from .fields import get_model_fields
+import re
 
-
-def get_model_fields(serializer_class):
-    '''
-    TODO: read the fields and generate a list of validators that can be replicated 
-    in the vue aplication
-    '''
-    instance = serializer_class()
-    fields = {}
-    relation_classes = [
-        HyperlinkedIdentityField,
-        HyperlinkedRelatedField,
-        ManyRelatedField,
-        PrimaryKeyRelatedField,
-        RelatedField,
-        SlugRelatedField,
-        StringRelatedField,
-    ]
-    try:
-        for f in instance._writable_fields:
-            field={}
-            field['related'] = False
-            field['_kwargs'] = [ str(x) for x in getattr( f, '_kwargs', []) ]
-            field['label'] = str(getattr( f, 'label', None))
-            field['help_text'] = str(getattr( f, 'help_text', None))
-            field['allow_null']= getattr( f, 'allow_null', False)
-            field['allow_blank']= getattr( f, 'allow_blank', False)
-            field['read_only']= getattr( f, 'read_only', False)
-            validators=[v.__class__.__name__ for v in getattr(f, '_validators', [])]
-            field['_validators'] = validators
-            fields[f.field_name] = field
-        for rf in instance._readable_fields:
-            if rf.__class__ in relation_classes:
-                # import pdb; pdb.set_trace()
-                field['related']=True
-                child_relation=getattr(rf, 'child_relation', None)
-                if child_relation is not None:
-                    qs=getattr(child_relation, 'queryset', None)
-                else:
-                    qs=None
-                if qs is not None:
-                    field['related_model']=qs.model.__name__
-                else:
-                    field['related_model']=rf.field_name
-                field['_kwargs']=[str(x) for x in getattr(rf, '_kwargs', [])]
-                field['label']=str(getattr(rf, 'label', None))
-                field['help_text']=str(getattr(rf, 'help_text', None))
-                field['required']=getattr(rf, 'required', False)
-                validators=[v.__class__.__name__ for v in getattr(rf, '_validators', [])]
-                field['_validators']=validators
-                fields[rf.field_name]=field
-            elif issubclass(rf.__class__, ModelSerializer):
-                field['related']=True
-                field['related_model']=rf.Meta.model.__name__
-                field['_kwargs']=[str(x) for x in getattr(f, '_kwargs', [])]
-                field['label']=str(getattr(f, 'label', None))
-                field['help_text']=str(getattr(f, 'help_text', None))
-                field['allow_null']=getattr(f, 'allow_null', False)
-                field['allow_blank']=getattr(f, 'allow_blank', False)
-                field['read_only']=getattr(f, 'read_only', False)
-                validators=[v.__class__.__name__ for v in getattr(f, '_validators', [])]
-                field['_validators']=validators
-                fields[f.field_name]=field
-            else:
-                if rf not in instance._writable_fields and rf.field_name is not 'id':
-                    # print(rf.field_name)
-                    pass
-    except Exception as e:
-        # raise e
-        # print(e)
-        # print(serializer_class)
-        pass
-    return fields
 
 class APIReader(object):
     """
@@ -121,7 +51,7 @@ class APIReader(object):
         '''
         Estructrure each endpoint as a dicrionary reading the callback
         '''
-        end_points= []
+        # end_points= []
         actions = {}
         for (ind, pattern) in enumerate(sub_route):
             if pattern.callback is not None:
@@ -157,15 +87,11 @@ class APIReader(object):
         '''  Genetates a map of paths and actions that can be taken every case 
         Iterates over each route as a Model it does note take into acounts un routed paths
         '''
-        # proaccess='api.urlpatterns'
         modules={}
-        for idx, path in [ (i,p) for (i, p) in enumerate(self.api.urlpatterns) if p.callback is None ]:
+        for idx, path in [ (i,p) for (i, p) in enumerate(api.urlpatterns) if p.callback is None ]:
             modules[self.getName(path)] = self.processRoutes(path)
-        # print(json.dumps(modules, indent=2))
         return modules
 
-
-        # Route Reader
 
 
 
@@ -234,10 +160,10 @@ class APIMap(object):
         '''
         Gets the namespace used to define the endpoint name, from an enpoint dicctionary 
         '''
-        ep=a['endpoint_name'].split('-')
-        if len(ep)>1:
+        ep = a['endpoint_name'].split('-')
+        if len(ep) > 1:
             return True, ep[0]
-        return  False ,a['module_name']
+        return  False , a['module_name']
 
     def generateModels(self):
         ''' Generates the final iteration of the models
