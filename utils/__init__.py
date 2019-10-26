@@ -36,8 +36,8 @@ def get_auth_user(request):
         'first_name':request.user.first_name,
         'last_name':request.user.last_name,
         'email':request.user.email,
-        'permissions':PermissionSerializer(request.user.user_permissions.all(), many=True).data,
-        'groups':GroupsSerializer(request.user.groups.all(), many=True).data
+        'permissions':[{'id':p.pk} for p in request.user.user_permissions.all()],
+        'groups':[{'id':g.pk, 'name':g.name} for g in request.user.groups.all()]
         }
     else:
         user=request.user.is_authenticated
