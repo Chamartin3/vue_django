@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.utils.encoding import smart_str
+from django.middleware.csrf import get_token
 from .serializers import GroupsSerializer, PermissionSerializer
 from .api_map import ApiMap
+from importlib import import_module
 
 
 # Autentication GlobalVariables
@@ -14,6 +16,7 @@ DLV_AUTH_PATH = getattr(settings, "DLV_AUTH_PATH", None)
 DJV_NAVIGATION = getattr(settings, "DJV_NAVIGATION", [''])
 DJV_EXCLUDED_ROUTES = getattr(settings, "DJV_EXCLUDED_ROUTES", [''])
 DJV_API_ROUTE = getattr(settings, "DJV_API_ROUTE", 'api/')
+DJV_API_URLS = getattr(settings, "DJV_API_URLS", None )
 
 def get_authentication():
     on_login = LOGIN_URL
@@ -30,7 +33,7 @@ def get_authentication():
 def get_auth_user(request):
     ''' returns all the Autentication information for the current user'''
     if request.user.is_authenticated:
-        user= {
+        user = {
         'id':request.user.pk,
         'username':request.user.username,
         'first_name':request.user.first_name,
@@ -40,7 +43,7 @@ def get_auth_user(request):
         'groups':[{'id':g.pk, 'name':g.name} for g in request.user.groups.all()]
         }
     else:
-        user=request.user.is_authenticated
+        user = request.user.is_authenticated
     return user
 
 
@@ -50,13 +53,13 @@ def get_routes(api):
     # Paths that have an asociated route (this are also the 
     # paths where a aplication is redirectes if the vue routed does not match a page )
     # TODO: filter these by autehcticationm
-    navigation_paths= DJV_NAVIGATION
+    navigation_paths = DJV_NAVIGATION
 
     # Paths that are excluded from the api
-    excluded_routes= DJV_EXCLUDED_ROUTES
+    excluded_routes = DJV_EXCLUDED_ROUTES
 
     # base route API (is the url where the api es located)I
-    api_baseroute= DJV_API_ROUTE
+    api_baseroute = DJV_API_ROUTE
 
     redir_paths=[{ 'redirect':f'/{p}', 'path': f'/{p}*'} for p in navigation_paths]
 
@@ -69,3 +72,16 @@ def get_routes(api):
         'model_routes':model_routes[0],
         'navigation_paths':redir_paths,
     }
+
+
+def generate_django_context(request):
+    api = import_module(DJV_API_URLS)
+    map = ApiMap(api)
+    context = {
+        'user': get_auth_user(request),
+        'csrf_token': get_token(request),
+        'autentication': get_authentication(),
+        '_actions': map.modelMap,
+        **get_routes(api)
+        }
+    return context
