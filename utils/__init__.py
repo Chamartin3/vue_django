@@ -18,6 +18,7 @@ DJV_EXCLUDED_ROUTES = getattr(settings, "DJV_EXCLUDED_ROUTES", [''])
 DJV_API_ROUTE = getattr(settings, "DJV_API_ROUTE", 'api/')
 DJV_API_URLS = getattr(settings, "DJV_API_URLS", None )
 
+
 def get_authentication():
     on_login = LOGIN_URL
     on_logout = LOGOUT_REDIRECT_URL
