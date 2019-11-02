@@ -39,3 +39,36 @@ Use Django in the back end and Vue in the Front end of your aplication. vue_djan
    ```
 
     **urls.py**
+
+   ```python
+   urlpatterns = [
+       url('my_restapi/', include((api, "api"), namespace='my_restapi'))
+       ]
+   ```
+
+   Then you need to define this route as a Global Variable,  for vue_django to know where to look at.
+
+    **settings.py**
+
+   ```python
+   DJV_API_URLS='myapp.api' # the api.py file
+   ```
+4. Insert the vue_django renderer to your main html aplication file.
+    
+    **urls.py**
+   ```python
+   urlpatterns = [
+       path('vue_django/', VueDjangoConfig.as_view(), name="vue_django"),
+       ]
+   ```
+    **index.html**
+   ```html
+   <script src="{% url 'vue_django'  %}"></script>
+
+   ```
+
+
+      
+
+
+
